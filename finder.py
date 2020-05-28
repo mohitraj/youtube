@@ -1,5 +1,4 @@
 # program created by mohit
-# offical website L4wisdom.com
 # email-id  mohitraj.cs@gmail.com
 import os
 import re
@@ -14,13 +13,15 @@ from functools import reduce
 from colorama import init,Fore, Back, Style
 init(autoreset=True)
 _a = (Fore.CYAN + '-----------------------------------------------------------------')
-
+_d = (Fore.RED + '-->D')
 
 dict1 = {}
 i = 1
 Anonymous=False
 
 def folder_open(path):
+    #import pdb;pdb.set_trace()
+    print ("path ", path)
     path = path.rsplit("/", 1)[0]
     path_list = path.split("\\")
     # print path_list
@@ -34,13 +35,13 @@ def folder_open(path):
     subprocess.Popen(r'explorer /select,"." ')
 
 def file_read(file_name):
-    pickle_file = open(file_name,'rb')
+    pickle_file = open(file_name,"rb")
     values = pickle.load(pickle_file) 
     pickle_file.close()
     return values
 
 def file_write(file_name,data):
-    pickle_file = open(file_name,'wb')
+    pickle_file = open(file_name,"wb")
     pickle.dump(data,pickle_file)
     pickle_file.close()
 
@@ -51,7 +52,8 @@ def save_search(path1):
     file_path= os.path.expanduser('~')
     os.chdir(file_path)
     size = 10
-    file_name = "save_search.raj"
+    file_name = "save.raj"
+	
     f_ok = os.access(file_name, os.F_OK)
     if f_ok:
         data= file_read(file_name)
@@ -93,7 +95,7 @@ def file_run(path1):
 def show_search():
     file_path= os.path.expanduser('~')
     os.chdir(file_path)
-    file_name = "save_search.raj"
+    file_name = "save.raj"
     f_ok = os.access(file_name, os.F_OK)
     if f_ok:
         choice_list = file_read(file_name)
@@ -153,7 +155,7 @@ def suggestion(file_dict, file_to_be_searched, level=0.8, index2=10):
             ratio_result = s.ratio2()
 
             if ratio_result >= level:
-                str1 = file_dict[key] + " : " + b
+                str1 = file_dict[key] + "/" + b
                 list2.append(str1)
                 list2.sort(key=lambda s: len(s))
                 # print str1
@@ -162,7 +164,7 @@ def suggestion(file_dict, file_to_be_searched, level=0.8, index2=10):
             print (e)
     index1 = 0
     for index, each in enumerate(list2):
-        print ("_" * 50)
+        print (_a)
         if index1 > index2:
 
             ch = input("want to see more suggestion, Press  Y ")
@@ -171,7 +173,10 @@ def suggestion(file_dict, file_to_be_searched, level=0.8, index2=10):
                 index1 = 0
             else:
                 break
-        print (index + 1, " ", each)
+        if each.endswith(">"):
+            print (index + 1, " ", each, _d)
+        else:
+            print (index + 1, " ", each)
         index1 = index1 + 1
     print  ("Want to open the folder ? ")
     try:
@@ -199,6 +204,8 @@ def get_drives():
 def search1(drive):
     global i
     for root, dir, files in os.walk(drive, topdown=True):
+        dir = [each+">" for each in dir]
+        files.extend(dir)
         for file in files:
             file = file.lower()
             if file in dict1:
@@ -237,8 +244,18 @@ def file_open():
     pickle_file.close()
     return file_dict
 
+def exclude(list2, elist):
+    list1 = list2[:]
+    for each in list2:
+        for e in elist:
+                
+            e = e.lower()
+            if each.lower().startswith(e):
+                #print ("each",each, list1.index(each))
+                list1.remove(each)
+    return list1
 
-def file_search(file_name, drive=None):
+def file_search(file_name, drive=None,elist=None, folder_flag=None, file_flag=None):
     t1 = datetime.now()
     try:
         file_dict = file_open()
@@ -249,6 +266,7 @@ def file_search(file_name, drive=None):
         print (e)
         sys.exit()
     file_to_be_searched = file_name.lower()
+    file_to_be_searched = r'{}'.format(file_to_be_searched)
     list1 = []
     print (Fore.YELLOW +Style.BRIGHT + "All File(s) :")
     for key in file_dict:
@@ -261,15 +279,27 @@ def file_search(file_name, drive=None):
             list1.append(str1)
     t2 = datetime.now()
     list1.sort()
+    if elist:
+         list1 = exclude(list1,elist)
     if drive:
         drive = drive[0]
+        print ("drive",drive)
         list1 = [each for each in list1 if each.startswith(drive)]
-    if list1:
 
+    if list1:
+        if folder_flag:
+            list1 =filter(lambda x: x.endswith(">"), list1)
+        if file_flag:
+            list1 =filter(lambda x: not x.endswith(">"), list1)
         for index, item in enumerate(list1):
             # print re.sub("?\d+", "", each)
-            print (index + 1, " " , item.split("|")[0])
+            if item.endswith(">"):
+                print (index + 1, " " , item.split("|")[0].rstrip(">"),_d)
+            else :
+                print (index + 1, " " , item.split("|")[0])
             print (_a)
+        total = t2 - t1
+        print ("Time taken to search ", total)
         d_f = input( "Press d to open folder or press f to open file or press enter for both ")
         d_f = d_f.lower()
 
@@ -286,9 +316,8 @@ def file_search(file_name, drive=None):
             folder_open(list1[num - 1])
             file_run(list1[num - 1])
 
-    total = t2 - t1
+
     print ("Total files are", len(list1))
-    print ("Time taken to search ", total)
 
     if not list1:
         print ("No File is found")
@@ -308,7 +337,10 @@ def main():
     # parser.add_argument('-w',help="New value", action='store_true')
     parser.add_argument('-s', nargs=3,help='Takes three arguments first file_name second percentage in numeric and third how many suggestions like abc 80 10')
     parser.add_argument('-d', nargs=2, help='Filter by drive,finder -d <file-name> drive_name')
+    parser.add_argument('-e', nargs='+', help='To display the files except for mentioned files with the option')
     parser.add_argument('-v', help="Version Number", action='store_true')
+    parser.add_argument('-f', help="Searches only Folders", action='store_true')
+    parser.add_argument('-of', help="Only files not folders", action='store_true')
     args = parser.parse_args()
 
     try:
@@ -316,7 +348,7 @@ def main():
         if args.c:
             create()
         elif args.v:
-            print ("Current Version --> 5.0")
+            print ("Current Version --> 6.0")
         elif args.l:
             show_search()
 
@@ -326,7 +358,7 @@ def main():
             suggestion(file_dict, args.s[0], float(args.s[1]) / 100)
 
         elif args.d:
-            file_search(args.d[0], args.d[1])
+            file_search(args.d[0], args.d[1], args.e, args.f, args.of)
         elif args.a:
             file = args.a[0]
             if file != None and file != "":
@@ -341,13 +373,12 @@ def main():
                 if args.file_name.isspace():
                     print ("Please give file name")
                 else:
-                    file_search(args.file_name)
+                    file_search(args.file_name,elist=args.e , folder_flag=args.f, file_flag=args.of)
                 
             else :
                 print ("Please give file name \n")
-        print (Back.MAGENTA + Style.BRIGHT +"Thanks for using L4wisdom.com")
         print (Back.CYAN + Style.BRIGHT +"Email id mohitraj.cs@gmail.com")
-        print (Back.GREEN + Style.BRIGHT +"URL: http://l4wisdom.com/finder_go.php")
+
 
     except Exception as e:
         print (e)
