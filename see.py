@@ -120,6 +120,8 @@ def main():
 				obj1 = Text_search(args.ri[0],dir,i=1)
 				obj1.txt_search_r()
 				
+		elif args.v:
+			print (args.v)
 		
 		print ("\nSubscribe CodingWisdom")
 		print ("Email id mohitraj.cs@gmail.com")
