@@ -1,6 +1,5 @@
 # program created by mohit
 # email-id  mohitraj.cs@gmail.com
-# hello everyone
 import os
 import re
 import sys
