@@ -1,6 +1,7 @@
 # program created by mohit
 # email-id  mohitraj.cs@gmail.com
-# Give suggestion
+# Give suggestion  
+# Always welcome
 import os
 from threading import Thread
 import pickle as cPickle
